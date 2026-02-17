@@ -310,7 +310,6 @@ module.exports = function (RED) {
     //         console.log( `Need to add event ${eventName}`);
     //     }
     // });
-    let wsrequest;
 
     wss.on("connection", function connection(ws, req) {
 
@@ -342,6 +341,14 @@ module.exports = function (RED) {
           text: `Connection from ${cbid}`,
         });
 
+        // Setup ping at websocket level
+        ws.isAlive = true;
+
+        const heartbeat = () => {
+          ws.isAlive = true;
+        };
+        ws.on("pong", heartbeat);
+
         // Announce connection
 
         ee.emit(connname, "connected");
@@ -370,6 +377,18 @@ module.exports = function (RED) {
         debug_csserver(`Connection request without params rejected`);
       }
     });
+
+    // Ping connected clients and terminate unresponsive websocket clients
+    const pingInterval = setInterval(function ping() {
+      wss.clients.forEach(function each(ws) {
+        if (ws.isAlive === false) {
+          return ws.terminate();
+        }
+
+        ws.isAlive = false;
+        ws.ping();
+      });
+    }, 30000);
 
     let soapServer15, soapServer16;
 
@@ -478,7 +497,7 @@ module.exports = function (RED) {
             "info",
             `Websocket connecting to chargebox: ${req.params.cbid}`,
           );
-          wsrequest = (data, cb) => {
+          let wsrequest = (data, cb) => {
             let err;
             let request = [];
 
@@ -518,6 +537,15 @@ module.exports = function (RED) {
           };
           node.send(msg);
 
+          const clearEventListener = () => {
+            ee.removeListener(eventname, wsrequest);
+          };
+
+          ws.on("error", function (err) {
+            debug_csserver(`Websocket error for ${localcbid}: ${err}`);
+            clearEventListener();
+          });
+
           ws.on("close", function ws_close(code, reason) {
             msg = {
               ocpp: {
@@ -527,7 +555,7 @@ module.exports = function (RED) {
                 reason: reason,
               },
             };
-
+            clearEventListener();
             node.send(msg);
           });
 
@@ -553,7 +581,7 @@ module.exports = function (RED) {
             let eventName = cbid + REQEVTPOSTFIX;
             if (ee.eventNames().indexOf(eventName) == -1) {
               debug_csserver(`Need to add event ${eventName}`);
-              ee.on(eventname, wsrequest);
+              ee.on(eventName, wsrequest);
             }
 
             try {
@@ -692,6 +720,7 @@ module.exports = function (RED) {
     this.on("close", function () {
       debug_csserver("About to stop the server...");
       ee.removeAllListeners();
+      clearInterval(pingInterval);
       expressWs.getWss().clients.forEach(function (ws) {
         debug_csserver("ws closing..", ws.readyState);
         if (ws.readyState === 1) {
