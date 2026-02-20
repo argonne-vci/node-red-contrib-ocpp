@@ -92,7 +92,7 @@
     </div>
     <div class="form-row">
         <input type="checkbox" id="node-input-wsdelayconnect" value="" style="display: inline-block; width: auto; vertical-align: top; margin-left: 30px; margin-right: 5px;">
-        <label for="node-input-wsdealyconnect" style="width: auto" >Delay connection on startup </label>
+        <label for="node-input-wsdelayconnect" style="width: auto" >Delay auto-connect on startup </label>
     </div>
     <div class="form-row">
         <label for="node-input-command"><i class="icon-cog"></i> Command</label>
@@ -157,8 +157,8 @@
         <dd>The URL of the Central System this charge point communicates with</dd>
         <dt>OCPP Ver</dt>
         <dd><i>*Future use<br/>Currently defaults to OCPP JSON 1.6 only</i></dd>
-        <dt>Delay connection on startup</dt>
-        <dd>If checked the websocket connection to the CS (CSMS) is not immediately attempted when the flow is started. Instead a message type "99" and command of "connect" must be sent to the node to initiate a connection</dd>
+        <dt>Delay auto-connect on startup</dt>
+        <dd>If checked, the websocket connection to the CS (CSMS) is not immediately attempted when the flow is started. Instead, a message with type "99" and command "connect" must be sent to the node to initiate a connection. If unchecked (default), the node auto-connects to the CSMS as soon as the flow starts.</dd>
         <dt>Command:</i></dt>
         <dd>(Optional) Select an OCPP command to send if none is passed in via <code>msg.payload.command</code></dd>
         <dt>Command Params:</dt>
