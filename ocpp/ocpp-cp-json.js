@@ -306,9 +306,8 @@ module.exports = function(RED) {
       }
     };
 
-    // Only do this if auto-connect is enabled
-    //
-    if (!(node.delay_auto_connect) && csmsURL){
+    // Auto-connect on startup unless "Delay auto-connect on startup" is checked
+    if (!node.delay_auto_connect && csmsURL){
       node.status({fill: 'blue', shape: 'dot', text: `Connecting...`});
       wsConnect();
     }
