@@ -76,8 +76,6 @@ module.exports = function (RED) {
 
     node.status({ fill: "blue", shape: "ring", text: "Waiting..." });
 
-    // ee = new EventEmitter();
-
     ee.on("error", (err) => {
       node.error("EMITTER ERROR: " + err);
       debug_csserver(`Event Emitter Error: ${err}`);
@@ -317,6 +315,7 @@ module.exports = function (RED) {
       if (req.params) {
 
         if (!ocpp2Authenticate(req, node.authEVSE, node.svcPath16j)) {
+          debug_csserver(`Terminating wss.on("connection") from  ${req.params.cbid}`);
           ws.terminate();
           return;
         }
@@ -599,7 +598,7 @@ module.exports = function (RED) {
                 while (callMsgIdToCmd.length > 25) {
                   callMsgIdToCmd.pop();
                 }
-                // debug_csserver({callMsgIdToCmd});
+                debug_csserver({ callMsgIdToCmd });
 
                 // This makes the response async so that we pass the responsibility onto the response node
                 ee.once(id, function (returnMsg) {
@@ -654,12 +653,15 @@ module.exports = function (RED) {
 
                 let findMsgId = { msgId: msg.ocpp.MessageId };
 
+                debug_csserver("Hello World");
+                debug_csserver({ callMsgIdToCmd });
                 let cmdIdx = callMsgIdToCmd.findIndex(getCmdIdx, findMsgId);
 
                 if (cmdIdx != -1) {
                   msg.payload.command = callMsgIdToCmd[cmdIdx].command;
                   msg.ocpp.command = msg.payload.command;
                   delete callMsgIdToCmd.splice(cmdIdx, 1);
+                  debug_csserver({ callMsgIdToCmd });
                 } else {
                   msg.payload.command = "unknown";
                   msg.ocpp.command = msg.payload.command;
